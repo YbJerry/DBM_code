@@ -284,3 +284,9 @@ void DBM::calCanonicalForm()
 		}
 	}
 }
+
+export DBM succ(DBM& d, string invariantOfLocation, string guardOfTransition, set<string> resetClocks) {
+	DBM Is(invariantOfLocation);
+	DBM g(guardOfTransition);
+	return ((d & Is)++ & Is & g).reset(resetClocks);
+}
