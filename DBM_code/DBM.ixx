@@ -11,6 +11,8 @@ module;
 
 export module DBM;
 
+import lexer;
+import parser;
 import ClockConstraints;
 import DBMItem;
 import util;
@@ -23,8 +25,21 @@ using namespace std;
 export class DBM {
 public:
 	DBM();
+	DBM(const DBM& dbm);
+	DBM(DBM&& dbm);
+	DBM(string str);
 	DBM(vector<BaseClockConstraints*> vecCC, set<string> st);
 	void print();
+	void init();
+	void initZero();
+
+	DBM& operator=(const DBM& dbm);
+	// intersection
+	DBM operator&(const DBM& dbm);
+	// clock reset
+	DBM reset(set<string> rs);
+	// elasping of time
+	DBM operator++(int);
 private:
 	/// <summary>
 	/// find DBM's canonical form
@@ -40,6 +55,26 @@ private:
 
 DBM::DBM()
 {
+}
+
+DBM::DBM(const DBM& dbm)
+{
+	*this = dbm;
+}
+
+DBM::DBM(DBM&& dbm)
+{
+	matrices = move(dbm.matrices);
+	valIdx = move(dbm.valIdx);
+	idxVal = move(dbm.idxVal);
+}
+
+DBM::DBM(string str)
+{
+	Lexer lexer;
+	Parser parser(lexer.lex(str));
+	parser.parse();
+	*this = move(DBM(parser.getClockConstraints(), parser.getSymbolTable()));
 }
 
 DBM::DBM(vector<BaseClockConstraints*> vecCC, set<string> st): matrices(vector<vector<DBMItem>>(st.size()+1, vector<DBMItem>(st.size()+1)))
@@ -97,7 +132,7 @@ void DBM::print()
 	cout << endl;
 
 	for (size_t i = 0, n = valIdx.size(); i < n; ++i) {
-		cout << setw(tabNum) << idxVal[i];
+		cout << setw(tabNum) << idxVal[static_cast<int>(i)];
 		for (int j = 0; j < n; ++j) {
 			const auto& item = matrices[i][j];
 			string prec = (item.getPrecedes() == PRECEDES::LEQ) ? "<=" : "<";
@@ -109,6 +144,116 @@ void DBM::print()
 		cout << endl;
 	}
 	
+}
+
+void DBM::init()
+{
+	size_t n = matrices.size();
+	for (size_t i = 0; i < n; i++)
+	{
+		for (size_t j = 0; j < n; j++) 
+		{
+			matrices[i][j].reset();
+		}
+	}
+}
+
+void DBM::initZero()
+{
+	size_t n = matrices.size();
+	for (size_t i = 0; i < n; i++)
+	{
+		for (size_t j = 0; j < n; j++)
+		{
+			matrices[i][j].set(0, PRECEDES::LEQ);
+		}
+	}
+}
+
+DBM& DBM::operator=(const DBM& dbm)
+{
+	matrices = dbm.matrices;
+	valIdx = dbm.valIdx;
+	idxVal = dbm.idxVal;
+	return *this;
+}
+
+DBM DBM::operator&(const DBM& dbm)
+{
+	DBM res(*this);
+	size_t n = matrices.size();
+	for (size_t i = 0; i < n; i++)
+	{
+		for (size_t j = 0; j < n; j++) 
+		{
+			const auto &c1 = matrices[i][j].getNumber();
+			const auto &c2 = dbm.matrices[i][j].getNumber();
+			const auto &prec1 = matrices[i][j].getPrecedes();
+			const auto &prec2 = dbm.matrices[i][j].getPrecedes();
+			auto &d = res.matrices[i][j];
+			d.set(min(c1, c2));
+			if (c1 < c2) {
+				d.set(prec1);
+			}
+			else if (c2 < c1)
+			{
+				d.set(prec2);
+			}
+			else
+			{
+				if (prec1 == prec2) {
+					d.set(prec1);
+				}
+				else {
+					d.set(PRECEDES::LT);
+				}
+			}
+		}
+	}
+	res.calCanonicalForm();
+	return res;
+}
+
+DBM DBM::reset(set<string> rs)
+{
+	DBM res(*this);
+	size_t n = res.matrices.size();
+	for (size_t i = 0; i < n; i++)
+	{
+		for (size_t j = 0; j < n; j++)
+		{
+			const auto& xi = idxVal[i];
+			const auto& xj = idxVal[j];
+			auto& item = res.matrices[i][j];
+			if (rs.count(xi) && rs.count(xj)) {
+				item.set(0, PRECEDES::LEQ);
+			}
+			else if (rs.count(xi) && !rs.count(xj))
+			{
+				const auto& tmp = res.matrices[0][j];
+				item.set(*tmp.getNumber(), tmp.getPrecedes());
+			}
+			else if (!rs.count(xi) && rs.count(xj))
+			{
+				const auto& tmp = res.matrices[i][0];
+				item.set(tmp.getNumber(), tmp.getPrecedes());
+			}
+		}
+	}
+	res.calCanonicalForm();
+	return res;
+}
+
+DBM DBM::operator++(int)
+{
+	DBM res(*this);
+	size_t n = res.matrices.size();
+	for (size_t i = 1; i < n; i++)
+	{
+		res.matrices[i][0].reset();
+	}
+	res.calCanonicalForm();
+	return res;
 }
 
 void DBM::calCanonicalForm()
@@ -124,13 +269,16 @@ void DBM::calCanonicalForm()
 				const auto& item2 = matrices[k][j];
 				auto& itemRes = matrices[i][j];
 				if (item1.getNumber() && item2.getNumber()) {
+					unique_ptr<DBMItem> itemTempPtr;
 					if (item1.getPrecedes() == PRECEDES::LEQ && item2.getPrecedes() == PRECEDES::LEQ) {
-						itemRes.set(PRECEDES::LEQ);
+						itemTempPtr = make_unique<DBMItem>(item1.getNumber().value() + item2.getNumber().value(), PRECEDES::LEQ);
 					}
 					else {
-						itemRes.set(PRECEDES::LT);
+						itemTempPtr = make_unique<DBMItem>(item1.getNumber().value() + item2.getNumber().value(), PRECEDES::LT);
 					}
-					itemRes.set(item1.getNumber().value() + item2.getNumber().value());
+					
+					if(!(itemRes < *itemTempPtr))
+						itemRes = *itemTempPtr;
 				}
 			}
 		}

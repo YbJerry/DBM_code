@@ -18,6 +18,7 @@ public:
 	Lexer();
 	vector<vector<pair<TOKEN, string>>> lex(void);
 	vector<vector<pair<TOKEN, string>>> lex(filesystem::path path);
+	vector<vector<pair<TOKEN, string>>> lex(string str);
 private:
 	vector<vector<pair<TOKEN, string>>> lex(istream& is);
 };
@@ -39,6 +40,13 @@ vector<vector<pair<TOKEN, string>>> Lexer::lex(filesystem::path path)
 	vector<vector<pair<TOKEN, string>>> res(lex(ifs));
 
 	return res;
+}
+
+vector<vector<pair<TOKEN, string>>> Lexer::lex(string str)
+{
+	stringstream ss;
+	ss << str;
+	return vector<vector<pair<TOKEN, string>>>(lex(ss));
 }
 
 vector<vector<pair<TOKEN, string>>> Lexer::lex(istream& is)
@@ -83,13 +91,13 @@ vector<vector<pair<TOKEN, string>>> Lexer::lex(istream& is)
 		}
 		else if (c == '<')
 		{
-			c = cin.get();
+			c = is.get();
 			if (c == '=') {
 				vec.emplace_back(make_pair(TOKEN::LEQ, "<="));
 			}
 			else {
 				vec.emplace_back(make_pair(TOKEN::LT, "<"));
-				cin.unget();
+				is.unget();
 			}
 		}
 		else if (c == '&')
@@ -97,7 +105,7 @@ vector<vector<pair<TOKEN, string>>> Lexer::lex(istream& is)
 			res.push_back(vec);
 			vec.clear();
 		}
-		else if (c == '\n') {
+		else if (c == '\n' || c == EOF) {
 			res.push_back(vec);
 			break;
 		}
