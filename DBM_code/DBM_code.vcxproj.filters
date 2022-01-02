@@ -18,5 +18,48 @@
     <ClCompile Include="DBM_code.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
+    <ClCompile Include="lexer.ixx">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="util.ixx">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="BaseClockConstraints.ixx">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="CVClockConstraints.ixx">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="parser.ixx">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="ClockConstraints.ixx">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="VCClockConstraints.ixx">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="VMVCClockConstraints.ixx">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="DBM.ixx">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="DBMItem.ixx">
+      <Filter>源文件</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="resource.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <ResourceCompile Include="DBM_code.rc">
+      <Filter>资源文件</Filter>
+    </ResourceCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <Text Include="test.txt" />
   </ItemGroup>
 </Project>
