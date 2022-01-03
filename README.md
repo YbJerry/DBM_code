@@ -7,4 +7,5 @@ A very simple demo for calculating difference-bound matrices and its successor i
 * Visual Studio 2022 (v143) -- The filename extension of C++20 module file in VS is "ixx". If you want to compile it in other platforms, you may need to change those filename extension to "cpp".
 
 ### Code Use
-Please look at the code in main function. Sorry, I'm too lazy.
+Sorry, I'm too lazy.
+Please look at the code in main function. The code is the example in the *Model Checking second edition*.
